@@ -2,6 +2,9 @@ import { useCallback, useEffect, useState } from "react";
 import { StyleSheet, Text, View, FlatList } from "react-native";
 
 import { Colors } from "../utils/styles";
+import { useDispatch, useSelector } from "react-redux";
+import { getNewToken, getPosts } from "../utils/authDataService";
+import { authActions } from "../store/authSlice";
 
 const PostItem = ({ title, description, author }) => (
   <View style={styles.itemContainer}>
@@ -15,7 +18,38 @@ function WelcomeScreen() {
   const [fetchedPosts, setFetchedPosts] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchPosts = () => {};// provide your implementation
+  const token = useSelector((state) => state.auth.token);
+  const refreshToken = useSelector((state) => state.auth.refreshToken);
+  const dispatch = useDispatch();
+
+  const fetchPosts = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      const response = await getPosts(token);
+      setFetchedPosts(response.data);
+    } catch (error) {
+      const status = error?.response?.status;
+      if (status === 403 || status === 401) {
+        try {
+          const tokenResponse = await getNewToken(refreshToken);
+          const newToken = tokenResponse.data.accessToken;
+          dispatch(authActions.setToken(newToken));
+          const response = await getPosts(newToken);
+          setFetchedPosts(response.data);
+        } catch (refreshError) {
+          dispatch(authActions.logOut());
+        }
+      }
+    } finally {
+      setRefreshing(false);
+    }
+  }, [token, refreshToken, dispatch]);
+
+  useEffect(() => {
+    fetchPosts();
+  }, []);
+
+  // provide your implementation
 
   return (
     <View style={styles.rootContainer}>

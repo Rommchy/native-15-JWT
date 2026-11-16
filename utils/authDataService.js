@@ -1,6 +1,6 @@
 import axios from "axios";
-// const BASE_URL = "http://10.0.2.2:4000/"";
-const BASE_URL = "http://172.28.128.1:4000/";
+const BASE_URL = "http://10.0.2.2:4000/";
+// const BASE_URL = "http://172.28.128.1:4000/";
 const BASE_URL_AUTH = `${BASE_URL}auth/`;
 
 async function authenticate(mode, login, password) {

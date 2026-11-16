@@ -10,6 +10,10 @@ import WelcomeScreen from "./screens/WelcomeScreen";
 import IconButton from "./components/ui/IconButton";
 import { authActions } from "./store/authSlice";
 
+import { Provider, useDispatch, useSelector } from "react-redux";
+import store from "./store";
+import { logout as logoutRequest } from "./utils/authDataService";
+
 const Stack = createNativeStackNavigator();
 
 function AuthStack() {
@@ -28,6 +32,19 @@ function AuthStack() {
 }
 
 function EnteredStack() {
+  const username = useSelector((state) => state.auth.login);
+  const refreshToken = useSelector((state) => state.auth.refreshToken);
+  const dispatch = useDispatch();
+
+  async function logoutHandler() {
+    try {
+      await logoutRequest(refreshToken);
+    } catch (error) {
+    } finally {
+      dispatch(authActions.logOut());
+    }
+  }
+
   return (
     <Stack.Navigator
       screenOptions={{
@@ -45,7 +62,7 @@ function EnteredStack() {
               icon="exit"
               color={tintColor}
               size={24}
-              onPress={() => dispatch(authActions.logout(refreshToken))}
+              onPress={logoutHandler}
             />
           ),
         }}
@@ -55,7 +72,7 @@ function EnteredStack() {
 }
 
 function InnerNavigation() {
-  const isAuthenticated = false;
+  const isAuthenticated = useSelector((state) => !!state.auth.token);
   return isAuthenticated ? <EnteredStack /> : <AuthStack />;
 }
 
@@ -63,9 +80,11 @@ export default function App() {
   return (
     <>
       <StatusBar style="light" />
-      <NavigationContainer>
-        <InnerNavigation />
-      </NavigationContainer>
+      <Provider store={store}>
+        <NavigationContainer>
+          <InnerNavigation />
+        </NavigationContainer>
+      </Provider>
     </>
   );
 }
